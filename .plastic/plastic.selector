@@ -1,0 +1,4 @@
+repository "SpaceFighter@jqt3of5@cloud"
+  path "/"
+    br "/main"
+    co "/main"
