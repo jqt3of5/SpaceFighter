@@ -39,7 +39,6 @@ public class OrbitalBodyComponent: MonoBehaviour
     /// </summary>
     public Vector3 Gravity = Vector3.zero;
     
-    
     private Vector3 _previousAngularVelociy = Vector3.zero; 
     public Vector3 ActualAngularAcceleration = Vector3.zero;
     /// <summary>
@@ -65,23 +64,21 @@ public class OrbitalBodyComponent: MonoBehaviour
     /// <summary>
     /// The mass of the object in Kg. 
     /// </summary>
-    public float Mass = 0;
+    public float Mass = 1;
     
     /// <summary>
     /// Standard gravitation parameter
-    /// Units are km^2 * km/s^2
+    /// Units are .1km^2 * .1km/s^2
     ///
     /// Mars is 6776km in diameter, so the surface is ~ 3000 km from the center. At the surface of an equivalent planet
-    /// I want the acceleration to be 50 m/s2.
+    /// I want the acceleration to be .050 km/s2.
     /// Ex: Earth is 3.986E5
     /// </summary>
-    public int Mu = 50 * 3000 * 3000;
+    public int Mu = 50 * 3000 * 3000 / 1000;
 
     public Vector3 Eccentricity = Vector3.zero;
 
     public float TrueAnomaly = 0;
-
-    public Rigidbody RigidBody; 
 
     /// <summary>
     /// </summary>
@@ -231,7 +228,11 @@ public class OrbitalBodyComponent: MonoBehaviour
     {
         if (space == Space.Self)
         {
-            force = transform.TransformVector(force);
+            if (force.magnitude == 0)
+            {
+                return;
+            }
+            force = transform.TransformDirection(force);
         }
         
         switch (mode)
@@ -253,12 +254,22 @@ public class OrbitalBodyComponent: MonoBehaviour
         }
     }
     
-    public void AddForce(Vector3 force, Vector3 atVector, Space space = Space.World, ForceMode mode = ForceMode.Impulse)
+    public void AddForce(Vector3 vector, Vector3 atVector, Space space = Space.World, ForceMode mode = ForceMode.Impulse)
     {
-        if (space == Space.World)
+        if (vector.magnitude == 0)
         {
-            //Convert to local
-            force = transform.InverseTransformVector(force);
+            return;
+        }
+
+        Vector3 worldvector = vector;
+        if (space == Space.Self)
+        {
+            //Convert to world 
+            worldvector = transform.TransformDirection(vector);
+        }
+        else
+        {
+            vector = transform.InverseTransformDirection(vector);
         }
         
         //Center of mass is the center of rotation. atVector is always local
@@ -267,10 +278,9 @@ public class OrbitalBodyComponent: MonoBehaviour
         //TODO: I doubt this works :/
         //Find the component of the force that would cause the object to translate
         var at_norm = atVector.normalized;
-        var vector = Vector3.Dot(force, at_norm) * at_norm;
-        
+        var localforce = Vector3.Dot(vector, at_norm) * at_norm;
         //Transform it back
-        vector = transform.TransformVector(vector);
+        var force = transform.TransformDirection(localforce);
         
         switch (mode)
         {
@@ -278,24 +288,22 @@ public class OrbitalBodyComponent: MonoBehaviour
                 Acceleration += vector;
                 break;
             case ForceMode.Force:
-                vector = vector / Mass;
-                Acceleration += vector;
-                
+                Acceleration += force / Mass;
                 //Calculate the moment - in local coordinates
-                AngularAcceleration += Vector3.Cross(force, atVector) / Mass;
+                AngularAcceleration += Vector3.Cross(localforce, atVector) / Mass;
                 
                 break;
             case ForceMode.Impulse:
-                vector = vector / Mass;
-                Velocity += vector*Time.fixedDeltaTime;
+                Velocity += force*Time.fixedDeltaTime;
                 
                 //Calculate the moment - in local coordinates
-                AngularVelocity += Vector3.Cross(force, atVector) / Mass * Time.fixedDeltaTime;
+                AngularVelocity += Vector3.Cross(localforce, atVector) / Mass * Time.fixedDeltaTime;
                 break;
             case ForceMode.VelocityChange:
                 Velocity += vector;
                 break;
         }
+        
     }
 
     //TODO: Instead of having to redo the calculations each time, we can just read from the provider
@@ -306,7 +314,6 @@ public class OrbitalBodyComponent: MonoBehaviour
     
     private void Awake()
     {
-        RigidBody = GetComponent<Rigidbody>();
     }
 
     // Start is called before the first frame update

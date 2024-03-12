@@ -20,7 +20,7 @@ public class ShipController : MonoBehaviour
    
     public float primaryThrust = 1000;
     public float secondaryThrust = 50;
-    public float rotationTorque = 10;
+    public float rotationTorque = 1000;
     public float max_rotation_speed = 100;
     
     private Vector2 _screen;
