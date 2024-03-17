@@ -18,24 +18,38 @@ public class ShipController : MonoBehaviour
     //are we throttling up, down, or neutral?
     private float throttleDir = 0;
    
-    public float primaryThrust = 1000;
+    public float primaryThrust = 100;
     public float secondaryThrust = 50;
-    public float rotationTorque = 1000;
+    public float rotationTorque = .1f;
     public float max_rotation_speed = 100;
     
     private Vector2 _screen;
     private Vector2 _mouse;
 
-    private Vector3 ThrustVector = Vector3.zero;
-    private Vector3 Angulartorque = Vector3.zero;
+    private Vector3 _thrustVector = Vector3.zero;
+    public Vector3 ThrustVector
+    {
+        get => _thrustVector;
+        set => _thrustVector = value;
+    }
+    
+    private Vector3 _angularTorque = Vector3.zero;
+    
+    public Vector3 Angulartorque
+    {
+        get => _angularTorque;
+        set => _angularTorque = value;
+    }
     
     public OrbitalBodyComponent OrbitalBody { get; set; }
+    public Rigidbody Rigidbody { get; set; }
 
     //TODO: force vectoring, adjustable throttle, moments and gyroscopic abilities, center of mass etc
 
     private void Awake()
     {
         OrbitalBody = GetComponent<OrbitalBodyComponent>();
+        Rigidbody = GetComponent<Rigidbody>();
     }
 
     // Start is called before the first frame update
@@ -51,40 +65,50 @@ public class ShipController : MonoBehaviour
         _mouse = (_screen - Mouse.current.position.ReadValue())/_screen;
         
         //Scale the acceleration ad velocity based on mouse position
-        Angulartorque.x = _mouse.y * rotationTorque; 
-        Angulartorque.y = -_mouse.x * rotationTorque; 
+        _angularTorque.x = _mouse.y * rotationTorque; 
+        _angularTorque.y = -_mouse.x * rotationTorque; 
     }
     void FixedUpdate()
     {
         //Throttle up in .5 seconds
         throttle += 2 * throttleDir * Time.fixedDeltaTime;
-
+        
         throttle = MathEx.Cap(throttle, 1, 0);
-
+        
         if (throttle >= 0)
-            ThrustVector.z = primaryThrust * throttle;
+            _thrustVector.z = primaryThrust * throttle;
         else if (throttleDir < 0)
-            ThrustVector.z = -secondaryThrust;
+            _thrustVector.z = -secondaryThrust;
         else
-            ThrustVector.z = 0;
+            _thrustVector.z = 0;
 
-        //Impulse forces are applied for only a single loop
-        //Add the thrust vector force
-        OrbitalBody.AddForce(ThrustVector, space: Space.Self, ForceMode.Impulse);
-        OrbitalBody.AddMoment(Angulartorque, ForceMode.Impulse);
+        var worldThrus = transform.TransformDirection(ThrustVector);
+        Rigidbody.AddForce(worldThrus, ForceMode.Acceleration);
+
+        Rigidbody.AddTorque(Angulartorque.x * transform.right , ForceMode.Acceleration);
+        Rigidbody.AddTorque(Angulartorque.y * transform.up , ForceMode.Acceleration);
+        Rigidbody.AddTorque(Angulartorque.z * transform.forward, ForceMode.Acceleration);
+        
+        // Debug.Log(Angulartorque);
     }
 
+    void OnCollisionEnter(Collision collision)
+    {
+        //Output the Collider's GameObject's name
+        Debug.Log(collision.collider.name);
+    }
+    
     public void OnThrust(InputValue value)
     {
         var vector = value.Get<Vector3>();
         
         throttleDir = vector.z;
-        ThrustVector.x = secondaryThrust * vector.x;
-        ThrustVector.y = secondaryThrust * vector.y;
+        _thrustVector.x = secondaryThrust * vector.x;
+        _thrustVector.y = secondaryThrust * vector.y;
     }
     
     public void OnRoll(InputValue value)
     {
-        Angulartorque.z = rotationTorque * value.Get<float>();
+        _angularTorque.z = rotationTorque * value.Get<float>();
     }
 }

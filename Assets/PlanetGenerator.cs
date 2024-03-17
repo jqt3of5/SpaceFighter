@@ -16,9 +16,9 @@ public class PlanetGenerator : MonoBehaviour
     private void Awake()
     {
         var planet = Instantiate(PlanetPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-        planet.name = planet.name + 0;
+        planet.name = planet.name;
             
-        var controller = planet.GetComponentInChildren<PlanetController>();
+        var controller = planet.GetComponent<PlanetController>();
         Planets.Add(controller);
     }
 
@@ -28,10 +28,7 @@ public class PlanetGenerator : MonoBehaviour
 
         foreach (var ship in Ships)
         {
-            ship.transform.position = new Vector3(0, 3200, 0);
-            ship.OrbitalBody.Velocity = new Vector3(Planets[0].OrbitalBody.Velocity.x + 10, 0, 0);
-            
-            ship.OrbitalBody.AddBodyToSystem(Planets[0].OrbitalBody);
+            ship.OrbitalBody.AddBodyToSystem(Planets[0]);
         }
         
     }
