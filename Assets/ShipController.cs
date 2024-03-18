@@ -18,10 +18,10 @@ public class ShipController : MonoBehaviour
     //are we throttling up, down, or neutral?
     private float throttleDir = 0;
    
-    public float primaryThrust = 100;
-    public float secondaryThrust = 50;
+    public float primaryThrust = .100f;
+    public float secondaryThrust = .050f;
     public float rotationTorque = .1f;
-    public float max_rotation_speed = 100;
+    public float max_rotation_speed = 3;
     
     private Vector2 _screen;
     private Vector2 _mouse;
@@ -85,9 +85,12 @@ public class ShipController : MonoBehaviour
         var worldThrus = transform.TransformDirection(ThrustVector);
         Rigidbody.AddForce(worldThrus, ForceMode.Acceleration);
 
-        Rigidbody.AddTorque(Angulartorque.x * transform.right , ForceMode.Acceleration);
-        Rigidbody.AddTorque(Angulartorque.y * transform.up , ForceMode.Acceleration);
-        Rigidbody.AddTorque(Angulartorque.z * transform.forward, ForceMode.Acceleration);
+        if (Rigidbody.angularVelocity.x < max_rotation_speed)
+            Rigidbody.AddTorque(Angulartorque.x * transform.right , ForceMode.Acceleration);
+        if (Rigidbody.angularVelocity.y < max_rotation_speed)
+            Rigidbody.AddTorque(Angulartorque.y * transform.up , ForceMode.Acceleration);
+        if (Rigidbody.angularVelocity.z < max_rotation_speed)
+            Rigidbody.AddTorque(Angulartorque.z * transform.forward, ForceMode.Acceleration);
         
         // Debug.Log(Angulartorque);
     }

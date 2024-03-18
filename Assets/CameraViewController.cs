@@ -15,8 +15,8 @@ public class CameraViewController : MonoBehaviour
     private Canvas _canvas;
     private Camera _camera;
 
-    private Dictionary<PlanetController, TextMeshProUGUI> _texts = new Dictionary<PlanetController, TextMeshProUGUI>();
-    private PlanetController[] _planets;
+    private Dictionary<GameState, TextMeshProUGUI> _texts = new Dictionary<GameState, TextMeshProUGUI>();
+    private GameState[] _planets;
     private ShipController _player;
     
     public TextMeshProUGUI LabelPrefab;
@@ -30,6 +30,9 @@ public class CameraViewController : MonoBehaviour
     private BoxCollider _boxCollider; 
     private GraphicRaycaster _raycaster;
     private TextMeshProUGUI _prograde;
+    private TextMeshProUGUI _throttle;
+    private TextMeshProUGUI _orbit;
+    private TextMeshProUGUI _target;
 
     // Start is called before the first frame update
     void Start()
@@ -37,7 +40,7 @@ public class CameraViewController : MonoBehaviour
         _canvas = GetComponentInChildren<Canvas>();
         _camera = GetComponent<Camera>();
         _player = FindObjectOfType<ShipController>();
-        _planets = FindObjectsByType<PlanetController>(FindObjectsSortMode.None);
+        _planets = FindObjectsByType<GameState>(FindObjectsSortMode.None);
 
         _yawTarget = GameObject.Find("YawTarget").GetComponent<TextMeshProUGUI>();
         _yawRate = GameObject.Find("YawRate").GetComponent<TextMeshProUGUI>();
@@ -45,6 +48,10 @@ public class CameraViewController : MonoBehaviour
         _panRate = GameObject.Find("PanRate").GetComponent<TextMeshProUGUI>();
         _pitchTarget = GameObject.Find("PitchTarget").GetComponent<TextMeshProUGUI>();
         _pitchRate = GameObject.Find("PitchRate").GetComponent<TextMeshProUGUI>();
+        
+        _throttle = GameObject.Find("ThrottleValue").GetComponent<TextMeshProUGUI>();
+        _orbit = GameObject.Find("OrbitalVelocity").GetComponent<TextMeshProUGUI>();
+        _target = GameObject.Find("TargetVelocity").GetComponent<TextMeshProUGUI>();
 
         _boxCollider = _canvas.GetComponent<BoxCollider>();
         _raycaster = GetComponent<GraphicRaycaster>();
@@ -72,6 +79,12 @@ public class CameraViewController : MonoBehaviour
         _panRate.text = $"{_player.Rigidbody.angularVelocity.y:F} /s";
         _panTarget.text = $"{_player.Rigidbody.rotation.y:F}";
 
+        _throttle.text = $"{_player.throttle}";
+
+        //TODO:
+        _orbit.text = $"{_player.Rigidbody.velocity.magnitude} km/s";
+       
+        
         var ray = new Ray(_player.transform.position, _player.Rigidbody.velocity);
 
         if (_boxCollider.Raycast(ray, out var hits, 50))
@@ -91,7 +104,10 @@ public class CameraViewController : MonoBehaviour
             
             var r = position - _player.transform.position;
             var velocity = Vector3.Dot(_player.Rigidbody.velocity, r.normalized);
-            _texts[planet].text = $"{planet.name}\n{r.magnitude:F}km\n{velocity:F}km/s";
+            
+            _target.text = $"{velocity} km/s";
+            
+            _texts[planet].text = $"{planet.name}\n{r.magnitude:F}km";
         }
     }
 }

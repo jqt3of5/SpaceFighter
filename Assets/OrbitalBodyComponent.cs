@@ -19,7 +19,6 @@ public enum VectorComponent
 }
 public class OrbitalBodyComponent: MonoBehaviour
 {
-
     public Rigidbody rigidBody;
     
     /// <summary>
@@ -36,14 +35,14 @@ public class OrbitalBodyComponent: MonoBehaviour
     private Vector3 _previousAngularVelocity;
     public Vector3 AngularAcceleration;
 
-    [CanBeNull] private PlanetController PrimaryGravitationalBody = null;
+    [CanBeNull] private GameState PrimaryGravitationalBody = null;
 
-    public void AddBodyToSystem(PlanetController body)
+    public void AddBodyToSystem(GameState body)
     {
         PrimaryGravitationalBody = body;
     }
 
-    public Vector3d CalcGravity(PlanetController body2)
+    public Vector3d CalcGravity(GameState body2)
     {
         var gravityVector = new Vector3d(body2.transform.position) - transform.position;
         var gravityDirection = gravityVector.normalized;
@@ -54,7 +53,7 @@ public class OrbitalBodyComponent: MonoBehaviour
         return gravityDirection * acc;
     }
 
-    private (Vector3d h_vec, Vector3d e_vec, double i, double Omega, double omega, double nu) OrbitalElements(PlanetController body1, Vector3d body2velocity, Vector3d body2position)
+    private (Vector3d h_vec, Vector3d e_vec, double i, double Omega, double omega, double nu) OrbitalElements(GameState body1, Vector3d body2velocity, Vector3d body2position)
     {
         //Source: https://orbital-mechanics.space/classical-orbital-elements/orbital-elements-and-the-state-vector.html
         
